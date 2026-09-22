@@ -1,0 +1,22 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Backend
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/storage/*.db
+backend/storage/*.db-wal
+backend/storage/*.db-shm
+backend/storage/uploads/*
+backend/storage/artifacts/*
+!backend/storage/uploads/.gitkeep
+!backend/storage/artifacts/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.log

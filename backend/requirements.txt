@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+python-multipart
+python-docx
+PyMuPDF
+psutil
+requests
+rapidocr-onnxruntime
