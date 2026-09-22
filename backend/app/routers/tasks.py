@@ -58,7 +58,7 @@ def run_agent(task_id: str, prompt: str):
     # Step 1: classify
     s0 = time.time()
     task_type = classify_task(prompt)
-    add_step(task_id, "Classify task", f"Keyword-scored task profile → {task_type}", "Task Classifier", "done",
+    add_step(task_id, "Classify task", f"Keyword-scored task profile -> {task_type}", "Task Classifier", "done",
               int((time.time() - s0) * 1000))
     set_task(task_id, task_type=task_type)
 
