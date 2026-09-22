@@ -20,7 +20,7 @@ def run(payload: RunRequest):
     run_id = str(uuid.uuid4())
     with get_db() as db:
         db.execute(
-            "INSERT INTO sandbox_runs (id, code, stdout, stderr, exit_code, duration_ms, isolation_mode, created_at) VALUES (?,?,?,?,?,?,?,?)",
+            "INSERT INTO sandbox_runs (id, code, stdout, stderr, exit_code, duration_ms, isolation_mode, created_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
             (run_id, payload.code, result["stdout"], result["stderr"], result["exit_code"],
              result["duration_ms"], result["isolation_mode"], time.time()),
         )
@@ -37,5 +37,5 @@ def status():
 @router.get("/runs")
 def list_runs(limit: int = 20):
     with get_db() as db:
-        rows = db.execute("SELECT * FROM sandbox_runs ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+        rows = db.execute("SELECT * FROM sandbox_runs ORDER BY created_at DESC LIMIT %s", (limit,)).fetchall()
     return [dict(r) for r in rows]

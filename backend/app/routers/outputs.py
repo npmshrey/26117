@@ -18,7 +18,7 @@ def list_outputs():
 @router.get("/{deliverable_id}/download")
 def download(deliverable_id: str):
     with get_db() as db:
-        row = db.execute("SELECT * FROM deliverables WHERE id=?", (deliverable_id,)).fetchone()
+        row = db.execute("SELECT * FROM deliverables WHERE id=%s", (deliverable_id,)).fetchone()
     if not row:
         raise HTTPException(404, "deliverable not found")
     path = Path(row["path"])

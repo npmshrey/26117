@@ -6,3 +6,7 @@ PyMuPDF
 psutil
 requests
 rapidocr-onnxruntime
+langgraph
+langchain-core
+qdrant-client[fastembed]
+psycopg[binary]

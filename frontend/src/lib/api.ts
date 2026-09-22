@@ -43,6 +43,8 @@ export const api = {
         ocr_pages_processed: number;
         avg_retrieval_latency_ms: number | null;
         ocr_available: boolean;
+        embedding_model?: string;
+        vector_dim?: number;
       }>("/documents/stats"),
     upload: (file: File) => {
       const fd = new FormData();

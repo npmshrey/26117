@@ -143,11 +143,15 @@ export default function Documents() {
                 </div>
                 <div className="flex items-center justify-between text-[12px]">
                   <span className="text-[var(--color-ink-dim)]">Vector index</span>
-                  <span className="mono text-white">SQLite FTS5 · local · on disk</span>
+                  <span className="mono text-white">Qdrant · local · on disk</span>
+                </div>
+                <div className="flex items-center justify-between text-[12px]">
+                  <span className="text-[var(--color-ink-dim)]">Embedding model</span>
+                  <span className="mono text-white">{stats?.embedding_model ?? "…"}{stats?.vector_dim ? ` (${stats.vector_dim}d)` : ""}</span>
                 </div>
                 <div className="flex items-center justify-between text-[12px]">
                   <span className="text-[var(--color-ink-dim)]">OCR engine</span>
-                  <span className="mono text-white">{stats?.ocr_available ? "Tesseract — available" : "not installed on this host"}</span>
+                  <span className="mono text-white">{stats?.ocr_available ? "RapidOCR (on-device, ONNX)" : "not available on this host"}</span>
                 </div>
               </div>
             </div>

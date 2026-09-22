@@ -21,7 +21,7 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
   }, []);
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]/60 px-6 backdrop-blur">
+    <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
       <div>
         <h1 className="text-[15px] font-semibold text-white">{title}</h1>
         {subtitle && <p className="text-[12px] text-[var(--color-ink-dim)]">{subtitle}</p>}
@@ -72,7 +72,7 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
           </button>
 
           {open && (
-            <div className="absolute right-0 z-20 mt-2 w-60 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] shadow-2xl">
+            <div className="absolute right-0 z-40 mt-2 w-60 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[#171c23] shadow-2xl">
               <div className="border-b border-[var(--color-border-soft)] px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-[var(--color-ink-faint)]">
                 Switch role view
               </div>

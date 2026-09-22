@@ -15,12 +15,15 @@ number and status shown in the UI is read live from a running backend.
   multimodal / general) and routes it to the best locally available open-weight
   model, live from [Ollama](https://ollama.com)'s registry. New models become
   available the moment you `ollama pull` them — no code changes needed.
-- **Agentic execution** — a task goes through classify → route → retrieve
-  (RAG) → generate → score confidence → produce a deliverable → audit, with
-  every step streamed to the UI in real time over SSE.
+- **Agentic execution** — a [LangGraph](https://langchain-ai.github.io/langgraph)
+  state machine takes a task through classify → route → retrieve (RAG) →
+  generate → score confidence → produce a deliverable → audit, with every
+  step streamed to the UI in real time over SSE.
 - **Private document grounding (RAG)** — PDFs, scans, and text files are
-  ingested, OCR'd on-device (RapidOCR, no external service), chunked, and
-  indexed in SQLite FTS5. Retrieved chunks are cited with source + page.
+  ingested, OCR'd on-device (RapidOCR, no external service), chunked, embedded
+  (FastEmbed / BGE-small), and indexed in [Qdrant](https://qdrant.tech) running
+  in embedded/local mode (no separate server process). Retrieved chunks are
+  cited with source, page, and cosine similarity score.
 - **Real deliverables** — completed tasks generate actual `.docx` approval
   notes (via `python-docx`), not just chat replies.
 - **Code sandbox** — arbitrary code runs in a Docker container with
@@ -33,20 +36,29 @@ number and status shown in the UI is read live from a running backend.
 ## Architecture
 
 ```
-frontend/   React 19 + TypeScript + Tailwind v4 (Vite) — SPA, polls/streams the API
+frontend/   React + TypeScript + Tailwind v4 (Vite) — SPA, polls/streams the API
 backend/    FastAPI (Python) — model router, agent orchestrator, RAG, sandbox, audit
 ```
 
-| Layer               | Implementation                                              |
-|---------------------|---------------------------------------------------------------|
-| Model serving        | [Ollama](https://ollama.com) (OpenAI-compatible local API)   |
-| Agent orchestration  | Custom step-logged state machine, streamed via SSE           |
-| Document intelligence| PyMuPDF (native PDF text) + RapidOCR (scanned pages/images)  |
-| Knowledge base / RAG | SQLite FTS5 (full-text search + ranking)                      |
-| Code sandbox         | Docker (`--network none`) with subprocess fallback            |
-| Audit & network proof| `psutil`-based live connection/interface inspection           |
-| Deliverables         | `python-docx` — generates real `.docx` approval notes         |
-| Persistence          | SQLite (documents, tasks, steps, citations, audit log, users) |
+| Layer                 | Implementation                                                |
+|-----------------------|----------------------------------------------------------------|
+| Model serving          | [Ollama](https://ollama.com) (OpenAI-compatible local API)    |
+| Agent orchestration    | [LangGraph](https://langchain-ai.github.io/langgraph) explicit state machine |
+| Document intelligence  | PyMuPDF (native PDF text) + RapidOCR (scanned pages/images)   |
+| Vector DB / RAG        | [Qdrant](https://qdrant.tech) (embedded/local mode) + FastEmbed (BGE-small) |
+| Metadata / structured store | PostgreSQL (documents, tasks, steps, citations, audit log, users) |
+| Code sandbox           | Docker (`--network none`) with subprocess fallback             |
+| Audit & network proof  | `psutil`-based live connection/interface inspection             |
+| Deliverables           | `python-docx` — generates real `.docx` approval notes          |
+
+This follows the problem statement's stack (React, FastAPI, Tailwind, Ollama,
+LangGraph, Qdrant, PostgreSQL, Docker, Python) as closely as this dev machine
+allows headlessly. **Deferred** — need infra this box doesn't reliably provide
+in an unattended environment: Redis (session cache), MinIO (object store),
+Prometheus/Grafana (observability), Nginx gateway/TLS, gVisor (Docker itself
+is already flaky here without a GUI session to finish its first-run setup),
+and real LDAP/SSO (RBAC is currently a seeded directory table, not a live
+auth layer).
 
 ## Running it locally
 
@@ -69,6 +81,19 @@ npm run dev
 ```
 
 The frontend proxies `/api` to `http://localhost:8000` (see `frontend/vite.config.ts`).
+
+### PostgreSQL
+
+The backend expects Postgres reachable at `127.0.0.1:5432`, database `forge`,
+user `postgres` (see `backend/app/db.py:DSN`). If you don't already run
+Postgres as a Windows service, a portable (no-install) runtime works:
+
+```powershell
+# one-time: download & extract the EDB binaries zip, then
+initdb -D <data-dir> -U postgres --auth=trust -E UTF8
+pg_ctl -D <data-dir> -l logfile start
+createdb -U postgres forge
+```
 
 ### Enabling live generation
 
@@ -99,17 +124,19 @@ a true `--network none` container automatically.
   instead of claiming network isolation it didn't provide.
 - RBAC/SSO is illustrative (a seeded directory table) — there is no real
   authentication layer yet.
+- Redis, MinIO, Prometheus/Grafana, Nginx, and gVisor from the original
+  architecture diagram are not wired up — see "Deferred" above.
 
 ## Project layout
 
 ```
 backend/
   app/
-    core/        # ollama.py, ocr.py, sandbox.py, network.py, docgen.py, system.py
+    core/         # ollama.py, ocr.py, rag.py, sandbox.py, network.py, docgen.py, system.py, agent_graph.py
     routers/      # models, documents, tasks, sandbox, audit, outputs, admin, system
-    db.py         # SQLite schema + audit logging
+    db.py         # PostgreSQL schema + audit logging
     main.py       # FastAPI app wiring
-  storage/        # uploads/, artifacts/, forge.db (gitignored except structure)
+  storage/        # uploads/, artifacts/, qdrant/ (gitignored except structure)
 frontend/
   src/
     pages/        # Workspace, Documents, ModelRouterPage, Sandbox, Audit, Outputs, Admin
